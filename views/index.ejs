@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+	<html lang="en">
+	<head>
+	<title>Messages</title>
+	<link rel="stylesheet" type="text/css" href="/frontend/style.css" />
+	<script src=/frontend/index.js></script>
+	</head>
+<body>
+<p>Titles: </p>
+<ul>
+	<% Entries.forEach(entry => {%>
+	<li><div class="AuthorText" style="display: inline-block" 
+				  contenteditable="true"><%= entry.Author %> </div> , 
+		<div class="TitleText" style="display: inline-block" 
+				       contenteditable="true"> <i> <%= entry.Title %> </i> </div> 
+	
+	<form style="display: inline-block" action="/del/" method="post">
+		<input  type="hidden" name="id" value="<%= entry._id%>"/>
+		<input type="submit" value="delete"/> 
+	</form>
+	<form style="display: inline-block" action="/patch/" onclick="button_echo(this)" method="post">
+		<input type="hidden" name="Author" class="hidden_author_patch"/>
+		<input type="hidden" name="Title" class="hidden_title_patch"/>
+		<input class="hidden_id_patch" type="hidden" name="id" value="<%= entry._id%>"/>
+		<input type="submit" value="update"/> 
+	</form>
+	</li> 
+	<% }) %>
+</ul>
+
+
+<h3> Add a title </h3>
+<form action="/msg/" method="post">
+<p>
+<label for="Author">
+	<span> Author: </span>
+	<strong><span aria-label="required">*</span></strong>
+</label>
+<input id="Author" type="text" name="Author" placeholder="Enter the Author..." required>
+</p>
+<p>
+<label for="Title"> 
+	<span> Title: </span>
+	<strong><span aria-label="required">*</span></strong>
+</label> 
+<input for="Title", type="text", name="Title", autocapitalize="on", placeholder="Enter Title..." required>
+</p>
+<input type="submit" value="OK">
+</form>
+</body>
+</html>
