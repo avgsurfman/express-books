@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000/"
+      "url": "http://localhost:8000/"
     }
   ],
   "paths": {
@@ -156,8 +156,28 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Author": {
+                    "example": "any"
+                  },
+                  "Title": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -264,7 +284,7 @@
             },
             "description": {
               "type": "string",
-              "example": "gentoonigger computer"
+              "example": "gentoo computer"
             }
           }
         }

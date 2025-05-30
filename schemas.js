@@ -13,6 +13,6 @@ const EntryModelSchema = new Schema({
 
 const  EntryModel = mongoose.model('EntryModel', EntryModelSchema);
 
-export EntryModel;
+//export EntryModel;
 
 

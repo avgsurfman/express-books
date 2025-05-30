@@ -2,8 +2,13 @@
 
 /* deps */
 const http = require('http');
+const cors = require('cors');
 const express = require('express');
 const app = express();
+
+
+// so that swagger doesn't fuck up
+app.use(cors());
 
 // mongoose
 const bodyParser = require('body-parser');
@@ -15,30 +20,28 @@ var urlencParser = bodyParser.urlencoded({extended:false});
 const swaggerUi = require('swagger-ui-express');
 //const swaggerJSdoc = require('swagger-jsdoc')
 
-/* !CHATGPT-generated, beware !*/
-/*
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Books API',
-      version: '1.0.0',
-      description: 'Simple REST API with MongoDB and Mongoose',
-    },
-    servers: [
-      {
-        url: 'http://localhost:3000', // or 8000 if that's what you're using
-      },
-    ],
-  },
-  apis: ['./app.js'], // or whatever your file is named
-};
-*/
-//const swaggerSpec = swaggerJsdoc(swaggerOptions);
-//app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 const swaggerFile = require('./swagger-output.json');
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+
+// graphql
+var { graphql, buildSchema } = require("graphql");
+const { createHandler } = require('graphql-http/lib/use/express');
+// grapqhqli
+const { ruruHTML} = require('ruru/server');
+
+
+// Construct a schema, using GraphQL schema language
+const schema = buildSchema(`
+  type Book {
+    id: String
+    Author: String
+    Title: String
+  }
+
+  type Query {
+  	books: [Book]
+  }
+`);
 
 
 app.set('view engine', 'ejs');
@@ -52,6 +55,9 @@ useUnifiedTopology: true});
 var db = mongoose.connection;
 db.on('error', console.error.bind(console,
 			'MongoDB connection error:'));
+db.once('open', () => {
+	console.log( '+++Connected to mongoose');
+})
 
 // schemas
 //require('./schemas.js');
@@ -67,7 +73,10 @@ var EntryModelSchema = new Schema({
 
 var EntryModel = mongoose.model('EntryModel', EntryModelSchema);
 
-
+// Root resolver
+const root = {
+  books: async () => await EntryModel.find(),
+};
 
 
 //get from DB
@@ -173,7 +182,7 @@ app.get('/api/books', async function(req, res) {
 app.get('/api/books/:id', async function(req, res) {
 	// #swagger.summary = 'Find a book with a specified ID.'
 	try{
-	const Entry = await EntryModel.findbyId(req.params.id);
+	const Entry = await EntryModel.findById(req.params.id);
 	if (!Entry) {
 		console.log("No entry with id" + req.params.id);
 		return res.status(404).send({message: "Entry not found"});
@@ -256,6 +265,31 @@ function hashCode(str) {
     return hash;
 }
 
+
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerFile);
+});
+
+
+// Create and use the GraphQL handler.
+app.all(
+  '/graphql',
+  createHandler({
+    schema: schema,
+    rootValue: root,
+  }),
+);
+
+app.get('/graphqli', (_req, res) => {
+  res.type('html');
+  res.end(ruruHTML({ endpoint: '/graphql' }));
+});
+
+
+// Start the server at port
+app.listen(4000);
+console.log('Running a GraphQL API server at http://localhost:4000/graphql');
 
 const server = http.createServer(app);
 const port = 8000;
