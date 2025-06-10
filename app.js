@@ -9,12 +9,16 @@ const app = express();
 
 // so that swagger doesn't fuck up
 app.use(cors());
+app.use(express.json());
+
 
 // mongoose
 const bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 const { ObjectId } = require('mongoose').Types;
-var urlencParser = bodyParser.urlencoded({extended:false});
+var urlencParser = bodyParser.urlencoded({extended:true});
+app.use(bodyParser.json());
+
 
 // swagger io
 const swaggerUi = require('swagger-ui-express');
@@ -40,9 +44,19 @@ const schema = buildSchema(`
 
   type Query {
   	books: [Book]
+	book(id: ID!): Book
+  }
+
+  input EntryInput {
+  	Author: String!
+	Title: String!
+  }
+
+  type Mutation {
+  	createEntry(input: EntryInput!): Book
   }
 `);
-
+// updateEntry(id: String!, input: EntryInput!) : Book
 
 app.set('view engine', 'ejs');
 app.use('/frontend', express.static('./frontend'));
@@ -76,6 +90,12 @@ var EntryModel = mongoose.model('EntryModel', EntryModelSchema);
 // Root resolver
 const root = {
   books: async () => await EntryModel.find(),
+  book: async ({ id }) => await EntryModel.findById(id),
+  createEntry: async ({input}) => {
+	const newEntry = new EntryModel(input);
+	return await newEntry.save();
+  } 
+
 };
 
 
@@ -123,21 +143,12 @@ app.post('/del', urlencParser, async function(req, res){
 
 	var books = await EntryModel.find();
 	Entries = books;
-	//key = Entries.findIndex(zn=> zn.Title === req.body.Title);
-	
-	/*if(key != -1) {
-		Entries.splice(key, 1);
-		console.log("Deleted" + req.body.Author);
-		res.render('index', {Entries});
-	} else throw "UHHHHHHHH";
-	console.log(Entries); */
 	res.status(200);
 	res.render('index', {Entries});
 });
 
 
 app.post('/patch', urlencParser, async function(req, res){
-	//console.log(req);
 	console.log("Update author with id " + req.body.id + "");
 	// try to retrieve the updated author and title
 	
@@ -196,37 +207,34 @@ app.get('/api/books/:id', async function(req, res) {
 });
 
 
-app.post('/api/books/:id', async function(req,res){
+app.post('/api/books', async function(req,res){
 	// #swagger.summary = 'Create a book. Returns the Entry and the ID of the object.'
+	console.log("Incoming POST body:", req.params);
 	try{
 	const Entry = new EntryModel({
-		Author: req.body.Author,
-		Title: req.body.Title
+		Author: req.params.Author,
+		Title: req.params.Title
 	});
-	await entry.save();
+	await Entry.save();
 	res.status(201).json(Entry)
 	} catch (err){
-		console.log("[Error] POST /api/books/:id" + err);
+		console.log("[Error] POST /api/books/ " + err);
 		res.status(400).send({error: "Bad request"});
-	} 
-});
+	}
+})
 
-
+// undefined hell -> DO NOT USE req.body without sanitization and null-checks!
 app.put('/api/books/:id', async function(req, res) {
 	// #swagger.summary = 'Update a book with a specified ID.'
-		try {
-		const doc = await EntryModel.findByIdAndUpdate(
-			req.params.id,
-			{$set: 
-			{Author: req.body.Author,
-			Title: req.body.Title}},
-			{new: true}
-		);
-		if (!doc) return res.status(404).send({message: "Entry not found"});
-		else res.status(200).json(doc);
+	console.log(req.params);
+	console.log(req.body);
+	try {
+		Entry = await updatebyID(req.params.id, req.body.Author, req.body.Title);
+		if (!Entry) return res.status(404).send({message: "Entry not found"});
+		else res.status(200).json(Entry);
 		} catch (err) {
-			res.status(500);
-			console.log("An error occured:", err);
+			console.log("[Error] PUT /api/books/:id " + err);
+			res.status(500).send({error: "Internal Server Error"});
 		}
 });
 
@@ -234,7 +242,7 @@ app.put('/api/books/:id', async function(req, res) {
 app.delete('/api/books/:id', async function(req, res) {
 	// #swagger.summary = 'Delete a book with an ID.'
 	try{
-	const Entry = await EntryModel.findByIdAndDelete(req.params.id);
+	Entry = await deletebyID(req.params.id);
 	if (!Entry) {
 		console.log("[Error] Can't delete; No entry with id" + req.params.id);
 		return res.status(404).send({message: "Entry not found"});
@@ -247,7 +255,25 @@ app.delete('/api/books/:id', async function(req, res) {
 	}
 });
 
-		
+
+/* CRUD FUNCTIONS */
+
+async function deletebyID(id){
+	const Entry = await EntryModel.findByIdAndDelete(id)
+	return Entry;
+}
+
+async function updatebyID(id, author, title){
+		const Entry = await EntryModel.findByIdAndUpdate(
+			id,
+			{$set: 
+			{Author: author, 
+			Title: title}},
+			{new: true}
+		);
+	return Entry;
+}
+
 
 /**
  * Returns a hash code from a string

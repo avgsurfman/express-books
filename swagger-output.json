@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1.0.0",
-    "title": "REST API",
-    "description": ""
+    "version": "1.0.1",
+    "title": "My little REST API",
+    "description": "CRUD is magic"
   },
   "servers": [
     {
@@ -142,45 +142,6 @@
           }
         }
       },
-      "post": {
-        "summary": "Create a book. Returns the Entry and the ID of the object.",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "Author": {
-                    "example": "any"
-                  },
-                  "Title": {
-                    "example": "any"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
       "put": {
         "summary": "Update a book with a specified ID.",
         "description": "",
@@ -245,6 +206,57 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/books/post": {
+      "post": {
+        "summary": "Create a book. Returns the Entry and the ID of the object.",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Author": {
+                    "example": "any"
+                  },
+                  "Title": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/swagger.json": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/graphqli": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
           }
         }
       }
